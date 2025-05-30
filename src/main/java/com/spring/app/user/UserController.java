@@ -27,7 +27,8 @@ public class UserController {
 	}
 	
 	@GetMapping("login")
-	public void login(@AuthenticationPrincipal UserVO userVO) {
-		
+	public String login() {
+		return "user/login";
 	}
+	
 }
