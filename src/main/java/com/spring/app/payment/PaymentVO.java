@@ -24,5 +24,6 @@ public class PaymentVO {
 	private String failReason;
 	private LocalDateTime createdAt;
 	
+	// test
 
 }
