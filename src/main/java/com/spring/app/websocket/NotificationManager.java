@@ -19,6 +19,7 @@ import com.spring.app.board.BoardVO;
 import com.spring.app.board.comment.CommentVO;
 import com.spring.app.board.interaction.InteractionVO;
 import com.spring.app.board.notice.NoticeDAO;
+import com.spring.app.board.qna.QnaVO;
 import com.spring.app.chat.ChatMessageVO;
 import com.spring.app.chat.ChatRoomVO;
 import com.spring.app.chat.RoomMemberVO;
@@ -409,55 +410,7 @@ public class NotificationManager {
 		this.sendNotification(notificationVO);
 	}
 
-//	//비품 신고접수 알림
-//	   public void reportNotification(EquipmentFaultVO equipmentFaultVO) throws Exception {
-//	      NotificationVO notificationVO = null;
-//	     
-//	      notificationVO = new NotificationVO();
-//	      notificationVO.setNotificationTitle("비품 신고 접수");
-//	      notificationVO.setUsername(equipmentFaultVO.getUsername());
-//	      notificationVO.setMessage("비품 신고가 접수되었습니다.\n"
-//	            + "(" + equipmentFaultVO.getEquipmentVO().getFacilityVO().getName() + " - " + equipmentFaultVO.getEquipmentName() + ")");
-//	      notificationVO.setLinkUrl("/equipment/main");
-//	      notificationVO.setNotificationType("N13");
-//	      notificationVO.setSenderId("admin");
-//	     
-//	      this.sendNotification(notificationVO);
-//	     
-//	      notificationVO = new NotificationVO();
-//	      notificationVO.setNotificationTitle("비품 신고 접수");
-//	      notificationVO.setUsername("admin");
-//	      notificationVO.setMessage("비품 신고요청이 왔습니다. 확인해주세요.\n"
-//	            + "(" + equipmentFaultVO.getEquipmentVO().getFacilityVO().getName() + " - " + equipmentFaultVO.getEquipmentName() + ")");
-//	      notificationVO.setLinkUrl("/equipment/admin");
-//	      notificationVO.setNotificationType("N13");
-//	      notificationVO.setSenderId(equipmentFaultVO.getUsername());
-//	     
-//	      this.sendNotification(notificationVO);
-//	     
-//	   }
-//	   
-//	   //비품 신고 진행상황 알림
-//	   public void reportingNotification(EquipmentFaultVO equipmentFaultVO) throws Exception {
-//	      NotificationVO notificationVO = new NotificationVO();
-//	     
-//	      if("처리완료".equals(equipmentFaultVO.getFaultStatus())) {
-//	         notificationVO.setMessage("비품 신고가 처리 완료되었습니다.\n"
-//	               + "(" + equipmentFaultVO.getEquipmentVO().getFacilityVO().getName() + " - " + equipmentFaultVO.getEquipmentName() + ")");
-//	      }else {
-//	         notificationVO.setMessage("비품 신고 처리 중 입니다.\n"
-//	               + "(" + equipmentFaultVO.getEquipmentVO().getFacilityVO().getName() + " - " + equipmentFaultVO.getEquipmentName() + ")");
-//	      }
-//	     
-//	      notificationVO.setNotificationTitle("비품 신고 진행상황");
-//	      notificationVO.setUsername(equipmentFaultVO.getUsername());
-//	      notificationVO.setLinkUrl("/equipment/main");
-//	      notificationVO.setNotificationType("N14");
-//	      notificationVO.setSenderId("admin");
-//	     
-//	      this.sendNotification(notificationVO);
-//	   }
-
+	
 
 	
 	//게시글 좋아요 알림
@@ -490,4 +443,23 @@ public class NotificationManager {
 		this.sendNotification(notificationVO);
 		
 	}
+	
+	//게시글 대댓글 알림
+	public void replyCommentNotification(CommentVO commentVO, CommentVO parentCommentVO) throws Exception {
+		NotificationVO notificationVO = new NotificationVO();
+		notificationVO.setNotificationTitle("대댓글");
+		notificationVO.setUsername(parentCommentVO.getUserName());
+		notificationVO.setMessage(commentVO.getUserName() + "님께서 회원님의 댓글에 대댓글을 작성했습니다 : "
+				+ parentCommentVO.getCommentContents() + "\n - "
+				+ commentVO.getCommentContents());
+		notificationVO.setLinkUrl("/board/detail?boardNum=".concat(commentVO.getBoardNum().toString()));
+		notificationVO.setNotificationType("N17");
+		notificationVO.setSenderId(commentVO.getUserName());
+		
+		this.sendNotification(notificationVO);
+	}
+	
+	
+	
+	
 }

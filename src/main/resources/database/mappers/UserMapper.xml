@@ -43,6 +43,17 @@
   		SELECT * FROM USER WHERE PHONE=#{phone}
   	</select>
   	
+  	<select id="getUserByPhoneAndId" resultType="UserVO">
+  		SELECT * 
+  		  FROM USER
+  		 WHERE PHONE=#{phone}
+  		   AND USERNAME=#{username}
+  	</select>
+  	
+  	  <select id="getUserListByPhone" resultType="UserVO">
+  		SELECT * FROM USER WHERE PHONE=#{phone}
+  	</select>  	
+  	
   	<select id="getPhone" resultType="String">
   		SELECT PHONE FROM USER WHERE PHONE=#{phone}
   	</select>
@@ -116,7 +127,7 @@
  	</update>
  	
  	<update id="update" parameterType="UserVO">
- 		UPDATE USER SET PASSWORD=#{password}, NAME=#{name}, EMAIL=#{email}, PHONE=#{phone} WHERE USERNAME=#{username}
+ 		UPDATE USER SET PASSWORD=#{password}, NAME=#{name}, EMAIL=#{email}, PHONE=#{phone}, BIRTH=#{birth} WHERE USERNAME=#{username}
  	</update>
  	
  	<resultMap type="UserVO" id="detailMap">
@@ -393,6 +404,12 @@
  		UPDATE USER SET PARENT=#{username}
  		WHERE DEPARTMENT_ID=#{departmentId} AND POSITION='DP0'
  	</update>
+ 	
+ 	<delete id="deleteUser" parameterType="UserVO">
+ 		DELETE
+ 		  FROM USER
+ 		 WHERE USERNAME=#{username}
+ 	</delete>
  	
 
  	

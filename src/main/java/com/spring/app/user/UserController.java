@@ -1,5 +1,6 @@
 package com.spring.app.user;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +34,7 @@ import com.spring.app.approval.ApprovalService;
 import com.spring.app.approval.DocumentVO;
 import com.spring.app.approval.FormVO;
 import com.spring.app.approval.UserSignatureVO;
+import com.spring.app.attendance.AttendanceScheduler;
 import com.spring.app.files.FileManager;
 import com.spring.app.home.util.Pager;
 import com.spring.app.auditLog.AuditLogService;
@@ -52,6 +56,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/user/*")
 @Slf4j
 public class UserController {
+
+    private final AttendanceScheduler attendanceScheduler;
 	
 	private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(".png", ".jpg", ".jpeg", ".gif");
 
@@ -87,16 +93,17 @@ public class UserController {
 	@Value("${board.file.path}")
 	private String path;
 
-    UserController(PaymentService paymentService, WebSecurityCustomizer custom) {
+    UserController(PaymentService paymentService, WebSecurityCustomizer custom, AttendanceScheduler attendanceScheduler) {
         this.paymentService = paymentService;
         this.custom = custom;
+        this.attendanceScheduler = attendanceScheduler;
     }
 	
 	@GetMapping("join/join")
 	void join() {}
 	
 	@GetMapping("join/memberJoin")
-	void memberJoin() {}
+	void memberJoin(@ModelAttribute UserVO userVO) {}
 	
 	@GetMapping("mypage")
 	void myPage(@AuthenticationPrincipal UserVO userVO, @RequestParam(required = false) Integer year, Model model) throws Exception {
@@ -143,7 +150,7 @@ public class UserController {
 	}
 	
 	@PostMapping("join/memberJoin")
-	String memberJoin(UserVO userVO, MultipartFile img, Model model, HttpServletRequest request) throws Exception{
+	String memberJoin(@Validated(JoinGroup.class) UserVO userVO, MultipartFile img, Model model, HttpServletRequest request, BindingResult error) throws Exception{
 		
 		String oriName = img.getOriginalFilename().toString();
 		
@@ -171,7 +178,12 @@ public class UserController {
 			
 		}
 		
-		int result = userService.join(userVO);
+		if (userService.errorCheck(error, userVO)) {
+			return "/user/join/memberJoin"; 
+		} else {
+			int result = userService.join(userVO);			
+		}
+		
 				
 		// 로그/감사 기록용
 		auditLogService.log(
@@ -186,18 +198,15 @@ public class UserController {
 		return "redirect:/";
 
 	}
-		
-		
-		
 	
 	@GetMapping("join/trainerJoin")
-	void trainerJoin(Model model) throws Exception {
+	void trainerJoin(Model model, @ModelAttribute UserVO userVO) throws Exception {
 		String trainerId = "T"+userService.getTrainerCode();
 		model.addAttribute("code", trainerId);
 	}
 	
 	@PostMapping("join/trainerJoin")
-	String trainerJoin(UserVO userVO, HttpServletRequest request, MultipartFile img, Model model) throws Exception{
+	String trainerJoin(@Validated(JoinGroup.class) UserVO userVO, HttpServletRequest request, MultipartFile img, Model model, BindingResult error) throws Exception{
 		Long code = userService.getTrainerCode();
 		userVO.setTrainerCode(code);
 		
@@ -227,7 +236,11 @@ public class UserController {
 			
 		}		
 		
-		int result = userService.join(userVO);
+		if (userService.errorCheck(error, userVO)) {
+			return "/user/join/trainerJoin";
+		} else {
+			int result = userService.join(userVO);			
+		}
 		
 		// 로그/감사 기록용
 		auditLogService.log(
@@ -370,18 +383,53 @@ public class UserController {
 	void findPwByPhone() throws Exception{}
 	
 	@PostMapping("findPwByPhone")
-	String findPwByPhone(@RequestParam("phone") String input, Model model, UserVO userVO, HttpServletRequest request) throws Exception {
+	String findPwByPhone(@RequestParam("phone") String phone, Model model, HttpServletRequest request) throws Exception {
 		
-		String phone = findInfoService.getPhone(input);
+		List<UserVO> list = findInfoService.getUserListByPhone(phone);
 		
-		if (phone!=null) {
-			userVO=findInfoService.getUserByPhone(phone);
+		if (list.isEmpty()) {
+			model.addAttribute("result", "입력한 정보로 가입된 회원이 존재하지 않습니다.");
+			model.addAttribute("path", "/user/findId");
 			
+			auditLogService.log(
+			        null,
+			        "FIND_PW_PHONE",
+			        "USER",
+			        "anonymous",
+			        "anonymous이 비밀번호 찾기 시도(폰번호) - 성공",
+			        request
+			    );
+			
+			return "commons/result";
+		} else if (list.size()==1) {
+			
+			model.addAttribute("username", list.get(0));
+			return "/user/findPwForm";
+		}else {
+			
+			model.addAttribute("users", list);
+			model.addAttribute("phone", phone);
+			
+			return "/user/chooseId";
+		}
+	}
+	
+	@PostMapping("findPw")
+	String findPw(@RequestParam("phone") String input, @RequestParam("username") String username, Model model, UserVO userVO, HttpServletRequest request) throws Exception {
+		
+			System.out.println("휴대번호 : "+input);
+			
+			System.out.println("이름 : "+username);
+			
+			userVO = findInfoService.getUserByPhoneAndId(username, input);
+
 			String newPassword=findInfoService.randomPassword(12);
 			userVO.setPassword(encoder.encode(newPassword));
 			findInfoService.changePw(userVO);
 			
-			findInfoService.findPwByPhone(phone, newPassword);
+			System.out.println(input);
+			
+			findInfoService.findPwByPhone(input, newPassword);
 			
 			model.addAttribute("result", "입력하신 전화번호로 임시 비밀번호를 발송했습니다.");	
 			
@@ -394,9 +442,7 @@ public class UserController {
 			        userVO.getUsername().concat("이 비밀번호 찾기 시도(폰번호) - 성공"),
 			        request
 			    );
-		}else {
-			model.addAttribute("result", "입력한 정보로 가입된 회원이 존재하지 않습니다.");
-			
+		
 			// 로그/감사 기록용
 			auditLogService.log(
 			        null,
@@ -406,7 +452,7 @@ public class UserController {
 			        "anonymous이 비밀번호 찾기 시도(폰번호) - 성공",
 			        request
 			    );
-		}
+		
 		
 		
 		List<MemberRoleVO> list = userService.getRole(userVO.getUsername());
@@ -599,5 +645,53 @@ public class UserController {
 	public int updateHead(UserVO userVO, DepartmentVO departmentVO) throws Exception {
 		int result = userService.updateHeadOfDept(userVO, departmentVO);
 		return result;
+	}
+	
+	//회원 탈퇴
+	@PostMapping("deleteUser")
+	@ResponseBody
+	public int deleteUser(@AuthenticationPrincipal UserVO userVO, HttpServletRequest request, HttpSession session, HttpServletResponse response) throws Exception {
+		int result = userService.deleteUser(userVO);
+		
+		session.invalidate();
+		Cookie cookie = new Cookie("accessToken", "/");
+		cookie.setMaxAge(0);
+		cookie.setPath("/");
+		response.addCookie(cookie);
+		
+		if(result > 0) {
+			// 로그/감사 기록용
+			auditLogService.log(
+			        null,
+			        "DELETE_USER",
+			        "USER",
+			        userVO.getUsername(),
+			        userVO.getUsername().concat("이 회원 탈퇴"),
+			        request
+			    );
+		}
+		
+		
+		return result;
+	}
+
+	//비밀번호 일치하는지 확인
+	@PostMapping("checkPassword")
+	@ResponseBody
+	public boolean checkPassword(@AuthenticationPrincipal UserVO userVO, String password) throws Exception {
+		
+		if (userVO.getSns()==null) {
+			return encoder.matches(password, userService.getPasswordByUsername(userVO));			
+		}else {
+			if (password.equals("탈퇴 시 모든 정보는 삭제되며 복구되지 않습니다.")) {
+				
+				return true;
+			} else {
+				
+				return false;
+			}
+		}
+		
+		
 	}
 }

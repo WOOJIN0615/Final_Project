@@ -1,5 +1,7 @@
 package com.spring.app.user;
 
+import java.util.List;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +42,8 @@ public class FindInfoService {
 		return RandomStringUtils.randomAlphanumeric(12);
 	}
 	
-	public String getPhone(String input) throws Exception {
-		String phone = userDAO.getPhone(input);
+	public List<String> getPhone(String input) throws Exception {
+		List<String> phone = userDAO.getPhone(input);
 		
 		return phone;
 	}
@@ -50,6 +52,18 @@ public class FindInfoService {
 		UserVO userVO = userDAO.getUserByPhone(phone);
 		
 		return userVO;
+	}
+	
+	public UserVO getUserByPhoneAndId(String username, String phone) throws Exception {
+		UserVO userVO = userDAO.getUserByPhoneAndId(username, phone);
+		
+		return userVO;
+	}
+	
+	public List<UserVO> getUserListByPhone(String phone) throws Exception {
+		List<UserVO> list = userDAO.getUserListByPhone(phone);
+		
+		return list;
 	}
 	
 	public String getEmail(String input) throws Exception {
@@ -93,7 +107,7 @@ public class FindInfoService {
 		DefaultMessageService defaultMessageService = NurigoApp.INSTANCE.initialize(apiKey, secretKey, "https://api.solapi.com");
 		Message message = new Message();
 		
-		message.setFrom("");
+//		message.setFrom(sendPhone);
 		message.setTo(phone);
 		message.setText("임시 비밀번호는 "+newPassword+"입니다.\n\n"
 				+"로그인 후 비밀번호를 변경해주세요.");

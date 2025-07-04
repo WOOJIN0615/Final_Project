@@ -53,9 +53,24 @@ public class EquipmentController {
 	
 	
 	@PostMapping("/insert")
-	public String insertEq(EquipmentVO equipmentVO) {
+	public String insertEq(EquipmentVO equipmentVO, @AuthenticationPrincipal UserVO userVO, HttpServletRequest request) {
 		
 	 equipmentService.addEquipment(equipmentVO);
+	 
+	// 로그/감사 기록용
+	try {
+		auditLogService.log(
+		        userVO.getUsername(),
+		        "CREATE_EQUIPMENT",
+		        "EQUIPMENT",
+		        equipmentVO.getEquipmentId().toString(),
+		        userVO.getUsername() + "이 비품 " + equipmentVO.getName() + "을 등록",
+		        request
+		    );
+	} catch (Exception e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
 	 
 	 return "redirect:/equipment/main";
 	}
@@ -126,7 +141,7 @@ public class EquipmentController {
             if (success) {
             	// 신고 접수 알림
             	faultReport = equipmentService.selectFaultReportById(faultReport.getReportId());
-//            	notificationManager.reportNotification(faultReport);
+            	notificationManager.reportNotification(faultReport);
             	
 				// 로그/감사 기록용
 				auditLogService.log(
@@ -179,7 +194,7 @@ public class EquipmentController {
             if (success) {
             	//비품 신고처리중 알림
             	EquipmentFaultVO equipmentFaultVO = equipmentService.selectFaultReportById(reportId);
-//            	notificationManager.reportingNotification(equipmentFaultVO);
+            	notificationManager.reportingNotification(equipmentFaultVO);
             	
 				// 로그/감사 기록용
 				auditLogService.log(
@@ -220,7 +235,7 @@ public class EquipmentController {
             if (success) {
             	//비품 신고 처리완료 알림
             	EquipmentFaultVO equipmentFaultVO = equipmentService.selectFaultReportById(reportId);
-//            	notificationManager.reportingNotification(equipmentFaultVO);
+            	notificationManager.reportingNotification(equipmentFaultVO);
             	
 				// 로그/감사 기록용
 				auditLogService.log(
