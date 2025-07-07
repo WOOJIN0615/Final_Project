@@ -16,6 +16,7 @@
     <result column="BOARD_REF"      property="boardRef"      jdbcType="BIGINT"/>
     <result column="BOARD_STEP"     property="boardStep"     jdbcType="BIGINT"/>
     <result column="IS_SECRET"      property="isSecret"      jdbcType="INTEGER"/>
+    <result column="SECRET_PASSWORD" property="secretPassword" jdbcType="VARCHAR"/>
   </resultMap>
 
   <!-- 1) Q&A 원글 작성 -->
@@ -39,7 +40,14 @@
        CURRENT_TIMESTAMP,
        #{boardContents},
        #{boardDepth},
-       #{boardRef},
+       <choose>
+           <when test="boardRef == 0 or boardRef == null">
+               0  <!-- 원글인 경우 일단 0으로 삽입, 나중에 업데이트 -->
+           </when>
+           <otherwise>
+               #{boardRef}  <!-- 답글인 경우 부모의 boardRef 사용 -->
+           </otherwise>
+       </choose>,
        #{boardStep},
        #{isSecret}
        <if test="secretPassword != null and secretPassword != ''">
@@ -47,15 +55,21 @@
        </if>
        )
   </insert>
+  
+  <!-- 1-1) 원글 작성 후 boardRef 업데이트 -->
+  <update id="updateBoardRef" parameterType="long">
+    UPDATE QNA
+    SET BOARD_REF = #{boardNum}
+    WHERE BOARD_NUM = #{boardNum} AND BOARD_REF = 0
+  </update>
 
   <!-- 2) 답글 작성 전 같은 그룹 내 step 밀어내기 -->
-<update id="updateStepForReply" parameterType="map">
-  UPDATE QNA
-  SET BOARD_STEP = BOARD_STEP + 1
-  WHERE BOARD_REF = #{boardRef}
-    AND BOARD_STEP > #{boardStep}
-</update>
-
+  <update id="updateStepForReply" parameterType="map">
+    UPDATE QNA
+    SET BOARD_STEP = BOARD_STEP + 1
+    WHERE BOARD_REF = #{boardRef}
+      AND BOARD_STEP > #{boardStep}
+  </update>
 
   <!-- 3) 전체 게시물 수 조회 -->
   <select id="selectQnaCount" resultType="int">
@@ -103,6 +117,9 @@
       SET BOARD_TITLE    = #{boardTitle},
           BOARD_CONTENTS = #{boardContents},
           IS_SECRET      = #{isSecret}
+          <if test="secretPassword != null and secretPassword != ''">
+              ,SECRET_PASSWORD = #{secretPassword}
+          </if>
     WHERE BOARD_NUM = #{boardNum}
   </update>
 
@@ -112,15 +129,20 @@
     WHERE BOARD_NUM = #{boardNum}
   </delete>
   
-<select id="getList" resultType="com.spring.app.board.qna.QnaVO">
-  SELECT
-    board_num, user_name, board_title, board_contents,
-    board_ref, board_step, board_depth,
-    board_date, is_secret
-  FROM QNA
-  ORDER BY board_ref DESC, board_step ASC
-</select>
-
-  
+  <!-- 8) 전체 목록 조회 (페이징 없이) -->
+  <select id="getList" resultMap="QnaResultMap">
+    SELECT
+      BOARD_NUM,
+      USERNAME,
+      BOARD_TITLE,
+      BOARD_CONTENTS,
+      BOARD_REF,
+      BOARD_STEP,
+      BOARD_DEPTH,
+      BOARD_DATE,
+      IS_SECRET
+    FROM QNA
+    ORDER BY BOARD_REF DESC, BOARD_STEP ASC
+  </select>
 
 </mapper>

@@ -1,18 +1,24 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Q&A 글 수정</title>
+    <!-- 공통 헤더 -->
+    <c:import url="/WEB-INF/views/templates/header.jsp"/>
     <style>
-        body {
+        body.sb-nav-fixed {
+            padding-top: 60px;    /* 탑바 높이 */
+            padding-left: 240px;  /* 사이드바 너비 */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f5f7fa;
+            color: #333;
+        }
+        .container {
             max-width: 800px;
             margin: 40px auto;
             padding: 20px;
-            color: #333;
         }
         h2 {
             font-weight: 700;
@@ -38,8 +44,9 @@
             font-size: 15px;
             resize: vertical;
             transition: border-color 0.2s;
+            box-sizing: border-box;
         }
-        input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
+        input:focus, textarea:focus {
             outline: none;
             border-color: #2663eb;
         }
@@ -48,6 +55,7 @@
             align-items: center;
             font-weight: 600;
             gap: 8px;
+            margin-bottom: 15px;
         }
         input[type="checkbox"] {
             width: 18px;
@@ -58,6 +66,7 @@
             margin-top: 25px;
             display: flex;
             gap: 12px;
+            justify-content: flex-end;
         }
         button, a.button-link {
             background-color: #2663eb;
@@ -75,40 +84,46 @@
         button:hover, a.button-link:hover {
             background-color: #1d51bc;
         }
-        a.button-link {
-            line-height: 1.6;
-            display: inline-block;
-        }
     </style>
 </head>
-<body>
+<body class="sb-nav-fixed d-flex flex-column min-vh-100">
+    <!-- 탑바 -->
+    <c:import url="/WEB-INF/views/templates/topbar.jsp"/>
+    <div id="layoutSidenav" class="d-flex flex-grow-1">
+        <!-- 사이드바 -->
+        <c:import url="/WEB-INF/views/templates/sidebar.jsp"/>
+        <div id="layoutSidenav_content" class="d-flex flex-column flex-grow-1">
+            <main class="flex-grow-1">
+                <div class="container">
+                    <h2>글 수정</h2>
+                    <form action="${pageContext.request.contextPath}/qna/update" method="post">
+                        <input type="hidden" name="boardNum" value="${qna.boardNum}" />
 
-<h2>글 수정</h2>
-<form action="${pageContext.request.contextPath}/qna/update" method="post">
-    <input type="hidden" name="boardNum" value="${qna.boardNum}" />
+                        <label for="boardTitle">제목:</label>
+                        <input type="text" id="boardTitle" name="boardTitle" value="${qna.boardTitle}" required />
 
-    <label>제목:
-        <input type="text" name="boardTitle" value="${qna.boardTitle}" required />
-    </label>
+                        <label for="boardContents">내용:</label>
+                        <textarea id="boardContents" name="boardContents" rows="10" required>${qna.boardContents}</textarea>
 
-    <label>내용:
-        <textarea name="boardContents" rows="10" required>${qna.boardContents}</textarea>
-    </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="isSecret" value="true" <c:if test="${qna.isSecret}">checked</c:if> />
+                            비밀글 설정
+                        </label>
 
-    <label class="checkbox-label">
-        <input type="checkbox" name="isSecret" value="true" <c:if test="${qna.isSecret}">checked</c:if> />
-        비밀글 설정
-    </label>
+                        <label for="secretPassword">비밀번호 (비밀글일 경우 필수):</label>
+                        <input type="password" id="secretPassword" name="secretPassword" value="${qna.secretPassword}" />
 
-    <label>비밀번호 (비밀글일 경우 필수):
-        <input type="password" name="secretPassword" value="${qna.secretPassword}" />
-    </label>
-
-    <div class="buttons">
-        <button type="submit">수정</button>
-        <a href="${pageContext.request.contextPath}/qna/detail/${qna.boardNum}" class="button-link">취소</a>
+                        <div class="buttons">
+                            <button type="submit">수정</button>
+                            <a href="${pageContext.request.contextPath}/qna/detail/${qna.boardNum}" class="button-link">취소</a>
+                        </div>
+                    </form>
+                </div>
+            </main>
+            <!-- 푸터 -->
+            <c:import url="/WEB-INF/views/templates/footer.jsp"/>
+        </div>
     </div>
-</form>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

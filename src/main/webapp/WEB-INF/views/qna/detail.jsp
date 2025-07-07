@@ -1,18 +1,24 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Q&A 상세</title>
+    <!-- 공통 헤더 -->
+    <c:import url="/WEB-INF/views/templates/header.jsp"/>
     <style>
-        body {
+        body.sb-nav-fixed {
+            padding-top: 60px;    /* 탑바 높이 */
+            padding-left: 240px;  /* 사이드바 너비 */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f5f7fa;
             color: #333;
-            padding: 20px;
+        }
+        .container {
             max-width: 900px;
             margin: 40px auto;
+            padding: 20px;
         }
         h2 {
             font-weight: 700;
@@ -58,7 +64,6 @@
             border: 1px solid #ccc;
             border-radius: 5px 0 0 5px;
             font-size: 15px;
-            outline: none;
             transition: border-color 0.2s;
         }
         form.secret-password-form input[type="password"]:focus {
@@ -84,8 +89,8 @@
             gap: 10px;
             flex-wrap: wrap;
         }
-        .action-buttons a, 
-        .action-buttons button {
+        .action-buttons a,
+        .action-buttons form button {
             background-color: #2663eb;
             color: white;
             text-decoration: none;
@@ -95,54 +100,59 @@
             font-size: 14px;
             border: none;
             cursor: pointer;
-            display: inline-block;
-            text-align: center;
             transition: background-color 0.2s;
         }
-        .action-buttons a:hover, 
-        .action-buttons button:hover {
+        .action-buttons a:hover,
+        .action-buttons form button:hover {
             background-color: #1d51bc;
         }
-        .action-buttons form {
-            margin: 0;
-        }
+        .action-buttons form { margin: 0; display: inline; }
     </style>
 </head>
-<body>
-
-<c:choose>
-    <c:when test="${not empty errorMsg}">
-        <div class="error-msg">${errorMsg}</div>
-
-        <!-- 비밀글 비밀번호 입력 폼 -->
-        <form class="secret-password-form" action="${pageContext.request.contextPath}/qna/detail" method="get">
-            <input type="hidden" name="boardNum" value="${boardNum}">
-            <input type="password" name="secretPassword" placeholder="비밀글 비밀번호 입력" required />
-            <button type="submit">확인</button>
-        </form>
-    </c:when>
-    <c:otherwise>
-        <h2>
-            ${qna.boardTitle}
-            <c:if test="${qna.isSecret}">
-                <span class="secret-lock">🔒</span>
-            </c:if>
-        </h2>
-        <div class="info-line"><strong>작성자:</strong> ${qna.userName}</div>
-        <div class="info-line"><strong>작성일:</strong> ${qna.boardDate}</div>
-        <hr/>
-        <div class="content"><c:out value="${qna.boardContents}" /></div>
-
-        <div class="action-buttons">
-            <a href="${pageContext.request.contextPath}/qna/list">목록으로</a>
-            <a href="${pageContext.request.contextPath}/qna/update/${qna.boardNum}">수정</a>
-            <form action="${pageContext.request.contextPath}/qna/delete/${qna.boardNum}" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');" style="display:inline;">
-                <button type="submit">삭제</button>
-            </form>
-            <a href="${pageContext.request.contextPath}/qna/reply?ref=${qna.boardRef}&step=${qna.boardStep}&depth=${qna.boardDepth}">답글쓰기</a>
+<body class="sb-nav-fixed d-flex flex-column min-vh-100">
+    <!-- 탑바 -->
+    <c:import url="/WEB-INF/views/templates/topbar.jsp"/>
+    <div id="layoutSidenav" class="d-flex flex-grow-1">
+        <!-- 사이드바 -->
+        <c:import url="/WEB-INF/views/templates/sidebar.jsp"/>
+        <div id="layoutSidenav_content" class="d-flex flex-column flex-grow-1">
+            <main class="flex-grow-1">
+                <div class="container">
+                    <c:choose>
+                        <c:when test="${not empty errorMsg}">
+                            <div class="error-msg">${errorMsg}</div>
+                            <form class="secret-password-form" action="${pageContext.request.contextPath}/qna/detail" method="get">
+                                <input type="hidden" name="boardNum" value="${boardNum}" />
+                                <input type="password" name="secretPassword" placeholder="비밀글 비밀번호 입력" required />
+                                <button type="submit">확인</button>
+                            </form>
+                        </c:when>
+                        <c:otherwise>
+                            <h2>${qna.boardTitle}
+                                <c:if test="${qna.isSecret}">
+                                    <span class="secret-lock">🔒</span>
+                                </c:if>
+                            </h2>
+                            <div class="info-line"><strong>작성자:</strong> ${qna.userName}</div>
+                            <div class="info-line"><strong>작성일:</strong> ${qna.boardDate}</div>
+                            <hr />
+                            <div class="content"><c:out value="${qna.boardContents}"/></div>
+                            <div class="action-buttons">
+                                <a href="${pageContext.request.contextPath}/qna/list">목록으로</a>
+                                <a href="${pageContext.request.contextPath}/qna/update/${qna.boardNum}">수정</a>
+                                <form action="${pageContext.request.contextPath}/qna/delete/${qna.boardNum}" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                                    <button type="submit">삭제</button>
+                                </form>
+                                <a href="${pageContext.request.contextPath}/qna/reply?ref=${qna.boardRef}&step=${qna.boardStep}&depth=${qna.boardDepth}">답글쓰기</a>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+            </main>
+            <!-- 푸터 -->
+            <c:import url="/WEB-INF/views/templates/footer.jsp"/>
         </div>
-    </c:otherwise>
-</c:choose>
-
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
