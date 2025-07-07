@@ -196,6 +196,8 @@ if (hostId != sender.value){
     document.getElementById("media").setAttribute("src", "");
   }
 
+  
+
 
 function showMessage(msg) {
     const chatBox = document.getElementById("chatContent");

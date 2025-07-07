@@ -254,7 +254,7 @@ body {
 </style>
 
 <div class="sports-topbar">
-    <a href="/" class="sports-logo">SPORTS CLUB</a>
+    <a href="/" class="sports-logo">WOOJIN</a>
     <sec:authentication property="principal" var="user"></sec:authentication>
 
     <div class="sports-actions">
